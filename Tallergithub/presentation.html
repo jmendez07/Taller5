@@ -1,0 +1,925 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller 5 - IA Avanzada y Escalamiento de Equipos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #F1F2F2; color: #4D4D4F; overflow-x: hidden; }
+
+        .header-bar { position: fixed; top: 0; width: 100%; background: #76232F; padding: 12px 40px; z-index: 1000; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-bar span { color: #FFFFFF; font-size: 13px; font-weight: 500; }
+        .header-bar .badge { background: #F5881F; color: #FFFFFF; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 11px; }
+
+        .presentation-container { width: 100%; min-height: 100vh; padding-top: 50px; }
+
+        .slide {
+            min-height: 100vh;
+            padding: 80px 80px 60px 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 2px solid #E6E6E6;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: absolute;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            position: relative;
+            pointer-events: auto;
+        }
+
+        .slide-cover {
+            background: linear-gradient(135deg, #A6192E 0%, #76232F 50%, #4D4D4F 100%);
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .slide-cover h1, .slide-cover p, .slide-cover .subtitle, .slide-cover .footer-text, .slide-cover .footer-text p {
+            color: #FFFFFF;
+        }
+
+        .slide-cover h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .slide-cover .subtitle {
+            font-size: 1.4em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .slide-cover .tags-container { margin: 30px 0; }
+
+        .tag {
+            display: inline-block;
+            background: #F5881F;
+            color: #FFFFFF;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .workshop-meta { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+        .meta-pill { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.28); color: white; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; font-weight: 600; }
+        .slide-cover .footer-text { font-size: 0.9em; opacity: 0.85; margin-top: 40px; }
+
+        h1 { font-size: 2.8em; color: #76232F; margin-bottom: 10px; font-weight: 700; }
+        h2 { font-size: 1.8em; color: #76232F; margin-bottom: 30px; font-weight: 600; border-left: 4px solid #E4002B; padding-left: 15px; }
+        h3 { font-size: 1.2em; color: #A6192E; margin-bottom: 12px; font-weight: 600; }
+
+        p { color: #4D4D4F; line-height: 1.7; margin: 10px 0; }
+        ul { list-style: none; margin-left: 0; }
+        li { color: #4D4D4F; margin-bottom: 10px; padding-left: 30px; position: relative; line-height: 1.7; }
+        li::before { content: '✓'; position: absolute; left: 0; color: #E4002B; font-weight: bold; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid #E6E6E6;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .card.highlight { border-left: 4px solid #E4002B; }
+        .card.blue { border-left: 4px solid #A6192E; }
+        .card.green-border { border-left: 4px solid #79B05B; }
+        .card.alert { border-left: 4px solid #F5881F; background: #F1F2F2; }
+
+        .module-card { min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; }
+        .module-number { width: 38px; height: 38px; border-radius: 50%; background: #E4002B; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 12px; }
+        .activity-label { display: inline-block; color: #76232F; background: #F1F2F2; border: 1px solid #BEBEBE; padding: 5px 10px; border-radius: 6px; font-size: 0.78em; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; }
+
+        .metric { font-size: 2.5em; font-weight: 700; color: #E4002B; }
+        .metric-label { font-size: 0.85em; color: #6D6E71; margin-top: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th { background: #76232F; color: white; padding: 12px 15px; text-align: left; font-weight: 600; }
+        td { padding: 10px 15px; border-bottom: 1px solid #E6E6E6; color: #4D4D4F; line-height: 1.5; }
+        tr:hover { background: #F1F2F2; }
+
+        .code-block { background: #76232F; color: #FFFFFF; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; margin: 15px 0; font-size: 0.85em; line-height: 1.6; white-space: pre-wrap; }
+
+        .message-box { background: linear-gradient(135deg, rgba(228, 0, 43, 0.08), rgba(245, 136, 31, 0.12)); border-left: 5px solid #E4002B; padding: 25px; border-radius: 10px; margin: 20px 0; line-height: 1.8; font-size: 1.05em; }
+
+        .canvas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 20px; }
+        .canvas-tile { background: #FFFFFF; border: 1px solid #E6E6E6; border-top: 4px solid #E4002B; border-radius: 10px; padding: 20px; min-height: 140px; color: #4D4D4F; line-height: 1.6; }
+        .canvas-tile strong { color: #76232F; display: block; margin-bottom: 8px; }
+
+        .timeline { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 0; border: 1px solid #E6E6E6; border-radius: 10px; overflow: hidden; background: white; margin-top: 25px; }
+        .timeline div { padding: 14px 16px; border-bottom: 1px solid #E6E6E6; color: #4D4D4F; line-height: 1.5; }
+        .timeline div:nth-child(-n+3) { background: #76232F; color: white; font-weight: 700; }
+        .timeline div:nth-last-child(-n+3) { border-bottom: none; }
+
+        .footer-note { margin-top: 30px; padding: 20px; background: #F1F2F2; border-radius: 8px; font-size: 0.85em; color: #4D4D4F; border-left: 4px solid #E4002B; }
+
+        .navigation { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 500; align-items: center; }
+        .nav-button { background: white; border: 2px solid #E4002B; color: #E4002B; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.4em; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 12px rgba(0,0,0,0.08); font-weight: bold; }
+        .nav-button:hover { background: #E4002B; color: white; transform: scale(1.1); box-shadow: 0 4px 16px rgba(228, 0, 43, 0.2); }
+        .slide-counter { color: #4D4D4F; font-weight: 600; font-size: 1em; background: white; padding: 10px 20px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border: 1px solid #E6E6E6; }
+        .keyboard-hint { position: fixed; bottom: 40px; right: 40px; background: white; padding: 12px 18px; border-radius: 8px; font-size: 0.85em; color: #4D4D4F; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border: 1px solid #E6E6E6; z-index: 500; }
+
+        @keyframes arrowFlow { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: -10; } }
+        .animated-arrow { stroke-dasharray: 5, 5; animation: arrowFlow 1.5s linear infinite; }
+        @keyframes pulseNode { 0%, 100% { r: 50; opacity: 1; } 50% { r: 55; opacity: 0.8; } }
+        .pulse-node { animation: pulseNode 2s ease-in-out infinite; }
+        @keyframes glowBorder { 0%, 100% { filter: drop-shadow(0 0 2px rgba(228, 0, 43, 0.45)); } 50% { filter: drop-shadow(0 0 15px rgba(228, 0, 43, 0.85)) drop-shadow(0 0 8px rgba(245, 136, 31, 0.75)); } }
+        .glow-rect { animation: glowBorder 2s ease-in-out infinite; }
+
+        @media (max-width: 768px) {
+            .slide { padding: 80px 40px 60px 40px; }
+            .grid, .grid-3, .canvas-grid { grid-template-columns: 1fr; }
+            .timeline { grid-template-columns: 1fr; }
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 1.6em; }
+            .header-bar { padding: 10px 20px; font-size: 12px; }
+            .keyboard-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <span>GitHub Copilot | Taller 5: IA Avanzada y Escalamiento de Equipos</span>
+        <span class="badge">Equipo de datos</span>
+    </div>
+
+    <div class="presentation-container">
+        <div class="slide slide-cover active">
+            <div>
+                <h1>Taller 5</h1>
+                <p class="subtitle">IA Avanzada y Escalamiento de Equipos con GitHub Copilot</p>
+                <div class="tags-container">
+                    <span class="tag">Custom Instructions</span>
+                    <span class="tag">Librerías de Prompts</span>
+                    <span class="tag">Revisión de código con IA</span>
+                    <span class="tag">Agentes Especializados</span>
+                    <span class="tag">Gobernanza</span>
+                </div>
+                <div class="workshop-meta">
+                    <span class="meta-pill">Equipos de datos y analítica</span>
+                    <span class="meta-pill">Formato práctico</span>
+                    <span class="meta-pill">Entregable reutilizable</span>
+                </div>
+            </div>
+            <div class="footer-text">
+                <p>Diseñar capacidades escalables de IA para equipos de datos</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Ruta del Taller</h2>
+            <div class="grid-3">
+                <div class="card highlight module-card">
+                    <div>
+                        <div class="module-number">1</div>
+                        <h3>Escalamiento</h3>
+                        <p>De productividad individual a estándares compartidos para equipos.</p>
+                    </div>
+                    <span class="activity-label">Mapa de oportunidad</span>
+                </div>
+                <div class="card blue module-card">
+                    <div>
+                        <div class="module-number">2</div>
+                        <h3>Custom Instructions</h3>
+                        <p>Estándares de uso de Copilot para equipos analíticos.</p>
+                    </div>
+                    <span class="activity-label">Guía de equipo</span>
+                </div>
+                <div class="card green-border module-card">
+                    <div>
+                        <div class="module-number">3</div>
+                        <h3>Librería de Prompts</h3>
+                        <p>Prompts versionados para análisis, código, SQL y documentación.</p>
+                    </div>
+                    <span class="activity-label">Prompt cards</span>
+                </div>
+                <div class="card highlight module-card">
+                    <div>
+                        <div class="module-number">4</div>
+                        <h3>Revisión de código con IA</h3>
+                        <p>Copilot como primer filtro de calidad, seguridad y mantenibilidad.</p>
+                    </div>
+                    <span class="activity-label">Lista asistida</span>
+                </div>
+                <div class="card blue module-card">
+                    <div>
+                        <div class="module-number">5</div>
+                        <h3>Agentes y Gobernanza</h3>
+                        <p>Diseño de aceleradores reutilizables con límites responsables.</p>
+                    </div>
+                    <span class="activity-label">Canvas de agente</span>
+                </div>
+                <div class="card alert module-card">
+                    <div>
+                        <div class="module-number">✓</div>
+                        <h3>Entregable Final</h3>
+                        <p>Un acelerador listo para socializar, mejorar y adoptar en el equipo.</p>
+                    </div>
+                    <span class="activity-label">Pitch del acelerador</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Objetivo del Taller</h2>
+            <div class="message-box">
+                <p style="font-size: 1.15em; margin: 0; color: #76232F;">Diseñar capacidades escalables de IA para equipos de datos: estándares, prompts, revisiones y agentes que puedan reutilizarse más allá de una persona o proyecto.</p>
+            </div>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Rol del Participante</h3>
+                    <p>Actuar como promotor de adopción: traduce prácticas individuales en activos compartidos para su equipo.</p>
+                </div>
+                <div class="card blue">
+                    <h3>Producto de Salida</h3>
+                    <p>Un kit de equipo para Copilot con instrucciones, prompts, lista de revisión y diseño de un acelerador especializado.</p>
+                </div>
+            </div>
+            <div class="footer-note">La meta no es aprender más comandos. La meta es que el equipo trabaje con una forma común, repetible y gobernada de usar IA.</div>
+        </div>
+
+        <div class="slide">
+            <h2>El Problema que Queremos Resolver</h2>
+            <div class="grid">
+                <div class="card alert">
+                    <h3>Uso Individual</h3>
+                    <ul>
+                        <li>Cada persona pregunta distinto</li>
+                        <li>Los estándares viven en la cabeza de expertos</li>
+                        <li>Los prompts buenos se pierden en conversaciones</li>
+                        <li>La calidad depende de quien use la herramienta</li>
+                    </ul>
+                </div>
+                <div class="card green-border">
+                    <h3>Capacidad de Equipo</h3>
+                    <ul>
+                        <li>Instrucciones comunes y versionadas</li>
+                        <li>Prompts reutilizables por flujo de trabajo</li>
+                        <li>Revisión asistida con criterios consistentes</li>
+                        <li>Agentes diseñados con límites claros</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="message-box" style="margin-top: 35px;"><strong>Principio de diseño:</strong> si una práctica con Copilot funciona dos veces, debe poder documentarse, versionarse y compartirse.</div>
+        </div>
+
+
+
+        <div class="slide">
+            <h2>Ejemplo: Custom Instruction en Acción</h2>
+            <svg viewBox="0 0 1000 120" style="width: 100%; height: 120px; margin-bottom: 30px;">
+                <rect x="50" y="20" width="140" height="80" rx="10" fill="#F5881F" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="120" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="#FFFFFF">Rol</text>
+                <text x="120" y="78" text-anchor="middle" font-size="11" fill="#FFFFFF">Datos Senior</text>
+                <line x1="200" y1="60" x2="240" y2="60" stroke="#76232F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="240,60 225,55 225,65" fill="#76232F"/>
+                <rect x="250" y="20" width="140" height="80" rx="10" fill="#76232F" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="320" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Contexto</text>
+                <text x="320" y="78" text-anchor="middle" font-size="11" fill="white">Databricks</text>
+                <line x1="400" y1="60" x2="440" y2="60" stroke="#76232F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="440,60 425,55 425,65" fill="#76232F"/>
+                <rect x="450" y="20" width="140" height="80" rx="10" fill="#A6192E" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="520" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Estándares</text>
+                <text x="520" y="78" text-anchor="middle" font-size="11" fill="white">SQL + Docs</text>
+                <line x1="600" y1="60" x2="640" y2="60" stroke="#76232F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="640,60 625,55 625,65" fill="#76232F"/>
+                <rect x="650" y="20" width="140" height="80" rx="10" fill="#E4002B" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="720" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Output</text>
+                <text x="720" y="78" text-anchor="middle" font-size="11" fill="white">Validable</text>
+            </svg>
+            <div class="grid">
+                <div class="card blue">
+                    <h3>Contexto</h3>
+                    <p>Trabajamos con arquitectura medallón, notebooks, pipelines y consultas analíticas.</p>
+                </div>
+                <div class="card green-border">
+                    <h3>Estándares Clave</h3>
+                    <ul>
+                        <li>Sin SELECT *</li>
+                        <li>Supuestos explícitos</li>
+                        <li>Salida con recomendaciones verificables</li>
+                        <li>Alertas sobre datos sensibles</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Práctica 1: Estándares de Uso de Copilot</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <span class="activity-label">Trabajo en grupos</span>
+                    <h3>Construir la instrucción base</h3>
+                    <p>Cada grupo define cómo Copilot debe comportarse cuando ayude en tareas de datos: tono, estándares técnicos, límites y formato de salida.</p>
+                </div>
+                <div class="card blue">
+                    <span class="activity-label">Criterio de calidad</span>
+                    <h3>Debe ser accionable</h3>
+                    <p>Una buena instrucción no dice “hazlo bien”. Define reglas verificables: nombres, patrones, pruebas, documentación y restricciones.</p>
+                </div>
+            </div>
+            <div class="code-block">Actúa como asistente senior para equipos de datos.
+Cuando generes código SQL, PySpark o Python:
+- Explica supuestos antes de proponer cambios.
+- Evita SELECT * y filtros no sargables.
+- Prioriza legibilidad, trazabilidad y manejo explícito de errores.
+- No inventes columnas, tablas, rutas ni credenciales.
+- Señala riesgos de datos sensibles y pide validación humana cuando aplique.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Plantilla: Custom Instructions del Equipo</h2>
+            <div class="canvas-grid">
+                <div class="canvas-tile"><strong>1. Rol</strong>Asistente esperado: ingeniero de datos, analista, arquitecto, revisor o documentador.</div>
+                <div class="canvas-tile"><strong>2. Contexto</strong>Plataformas, lenguajes, repositorios, arquitectura de datos y convenciones locales.</div>
+                <div class="canvas-tile"><strong>3. Estándares</strong>Reglas de SQL, Python, notebooks, pruebas, documentación y naming.</div>
+                <div class="canvas-tile"><strong>4. Restricciones</strong>Datos sensibles, credenciales, ambientes productivos y acciones no permitidas.</div>
+                <div class="canvas-tile"><strong>5. Formato de salida</strong>Tablas, listas de verificación, diferencias, fragmentos, documentación o explicación paso a paso.</div>
+                <div class="canvas-tile"><strong>6. Validación</strong>Qué pruebas, revisiones o aprobaciones deben ocurrir antes de adoptar el resultado.</div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Dónde Viven las Instrucciones en GitHub</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">Las Custom Instructions no son solo texto: son archivos versionados dentro del repositorio que Copilot lee automáticamente.</p>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Archivo</th><th>Alcance</th><th>Cuándo usarlo</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>.github/copilot-instructions.md</code></td><td>Todo el repositorio</td><td>Estándares globales del equipo: tono, reglas, restricciones y formato.</td></tr>
+                    <tr><td><code>.instructions.md</code></td><td>Carpeta actual y subcarpetas</td><td>Reglas específicas por módulo, capa o componente.</td></tr>
+                    <tr><td><code>.github/prompts/*.prompt.md</code></td><td>Invocable desde el chat</td><td>Prompts reutilizables que cualquier miembro puede ejecutar directamente.</td></tr>
+                </tbody>
+            </table>
+            <div class="footer-note">Estos archivos se versionan con Git como cualquier otro activo del proyecto. Cambios pasan por pull request y revisión.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Librerías de Prompts</h2>
+            <svg viewBox="0 0 1000 200" style="width: 100%; height: 180px; margin: 30px 0;">
+                <circle cx="500" cy="100" r="50" fill="#F5881F" stroke="#76232F" stroke-width="2" class="pulse-node"/>
+                <text x="500" y="105" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">Librería</text>
+                <text x="500" y="120" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF">Prompts</text>
+                <rect x="80" y="40" width="100" height="60" rx="8" fill="#76232F" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="130" y="70" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Dev 1</text>
+                <line x1="180" y1="70" x2="450" y2="90" stroke="#F5881F" stroke-width="2" class="animated-arrow" marker-end="url(#arrowhead)"/>
+                <rect x="80" y="120" width="100" height="60" rx="8" fill="#A6192E" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="130" y="150" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Dev 2</text>
+                <line x1="180" y1="150" x2="450" y2="110" stroke="#F5881F" stroke-width="2" class="animated-arrow" marker-end="url(#arrowhead)"/>
+                <rect x="800" y="40" width="100" height="60" rx="8" fill="#76232F" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="850" y="70" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Equipo 1</text>
+                <line x1="550" y1="90" x2="800" y2="70" stroke="#F5881F" stroke-width="2" class="animated-arrow" marker-end="url(#arrowhead)"/>
+                <rect x="800" y="120" width="100" height="60" rx="8" fill="#A6192E" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="850" y="150" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Equipo 2</text>
+                <line x1="550" y1="110" x2="800" y2="150" stroke="#F5881F" stroke-width="2" class="animated-arrow" marker-end="url(#arrowhead)"/>
+                <defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#F5881F"/></marker></defs>
+            </svg>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>¿Qué es?</h3>
+                    <p>Una colección organizada de instrucciones, preguntas y plantillas que un equipo reutiliza para obtener resultados consistentes.</p>
+                </div>
+                <div class="card blue">
+                    <h3>Reutilización</h3>
+                    <p>En lugar de escribir prompts desde cero, los equipos reutilizan plantillas probadas que garantizan calidad y consistencia.</p>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="slide">
+            <h2>Cómo Diseñar una Librería de Prompts</h2>
+            <table>
+                <thead>
+                    <tr><th>Categoría</th><th>Uso Típico</th><th>Ejemplo de Prompt</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>SQL y Datos</td><td>Optimización, validación, explicación de consultas</td><td>Revisa esta consulta y detecta riesgos de rendimiento y calidad de datos.</td></tr>
+                    <tr><td>PySpark / Python</td><td>Refactor, errores, pruebas, patrones reutilizables</td><td>Propón una versión más legible y testeable de esta transformación.</td></tr>
+                    <tr><td>Documentación</td><td>README, runbooks, diccionarios de datos</td><td>Genera documentación operacional con supuestos, entradas, salidas y riesgos.</td></tr>
+                    <tr><td>Calidad y Gobierno</td><td>Controles, linaje, privacidad, cumplimiento</td><td>Evalúa si este flujo maneja datos sensibles y qué controles faltan.</td></tr>
+                </tbody>
+            </table>
+            <div class="footer-note">Cada prompt debe tener dueño, versión, caso de uso, entradas esperadas, formato de salida y criterio de aceptación.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Archivos .prompt.md: Prompts como Código</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Estructura del archivo</h3>
+                    <div class="code-block">.github/prompts/sql-review.prompt.md
+---
+mode: agent
+description: Revisa consultas SQL para rendimiento
+---
+Actúa como arquitecto de datos senior.
+Revisa la consulta adjunta e identifica:
+1. Problemas de rendimiento
+2. Riesgos de calidad
+3. Recomendaciones con severidad
+
+Contexto: {{input}}</div>
+                </div>
+                <div class="card blue">
+                    <h3>Ventajas clave</h3>
+                    <ul>
+                        <li>Se invocan directo desde Copilot Chat</li>
+                        <li>Se versionan con Git (historial y blame)</li>
+                        <li>Se comparten al clonar el repositorio</li>
+                        <li>Soportan variables y contexto dinámico</li>
+                        <li>Cualquier miembro los ejecuta sin configuración</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note">Un archivo <code>.prompt.md</code> convierte una buena práctica individual en una capacidad compartida del equipo desde el primer commit.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Práctica 2: Crear Prompt Cards</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <span class="activity-label">Artefacto</span>
+                    <h3>Prompt Card</h3>
+                    <ul>
+                        <li>Nombre del prompt</li>
+                        <li>Problema que resuelve</li>
+                        <li>Contexto requerido</li>
+                        <li>Formato de respuesta esperado</li>
+                        <li>Criterios de calidad</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <span class="activity-label">Reto</span>
+                    <h3>Crear 3 prompts reutilizables</h3>
+                    <p>Uno para SQL, uno para revisión o debugging y uno para documentación. Deben poder usarse por otro equipo sin explicación adicional.</p>
+                </div>
+            </div>
+            <div class="code-block">Nombre: Revisor de SQL para rendimiento
+Objetivo: detectar problemas de costo, filtros, uniones y columnas innecesarias.
+Entrada: consulta SQL + motor/plataforma + objetivo de negocio.
+Salida: tabla con hallazgo, severidad, explicación y recomendación.
+Criterio: no inventar índices, tablas ni columnas; pedir contexto si falta.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Antipatrones Comunes con Copilot</h2>
+            <div class="grid">
+                <div class="card alert">
+                    <h3>Errores frecuentes</h3>
+                    <ul>
+                        <li>Prompts vagos: "hazlo mejor" sin criterio definido</li>
+                        <li>Aceptar respuestas sin validar contra datos reales</li>
+                        <li>Asumir que Copilot conoce el esquema o contexto interno</li>
+                        <li>Instrucciones contradictorias entre archivos</li>
+                        <li>Copiar código generado sin entender supuestos</li>
+                    </ul>
+                </div>
+                <div class="card green-border">
+                    <h3>Cómo evitarlos</h3>
+                    <ul>
+                        <li>Definir criterios verificables, no adjetivos</li>
+                        <li>Siempre validar con evidencia: pruebas, datos, revisión</li>
+                        <li>Dar contexto explícito: plataforma, tablas, restricciones</li>
+                        <li>Mantener una sola fuente de verdad por alcance</li>
+                        <li>Tratar la respuesta como borrador, no como solución final</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="message-box"><strong>Regla de oro:</strong> si no puedes explicar por qué la respuesta de Copilot es correcta, no la uses.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Revisión de código asistida por IA</h2>
+            <svg viewBox="0 0 1000 150" style="width: 100%; height: 140px; margin: 30px 0;">
+                <rect x="30" y="35" width="110" height="80" rx="8" fill="#76232F" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="85" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="white">1. Código</text>
+                <text x="85" y="85" text-anchor="middle" font-size="10" fill="white">a revisar</text>
+                <line x1="145" y1="75" x2="185" y2="75" stroke="#F5881F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="185,75 170,70 170,80" fill="#F5881F"/>
+                <rect x="190" y="35" width="110" height="80" rx="8" fill="#F5881F" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="245" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFFFFF">2. Análisis</text>
+                <text x="245" y="85" text-anchor="middle" font-size="10" fill="#FFFFFF">Copilot</text>
+                <line x1="305" y1="75" x2="345" y2="75" stroke="#F5881F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="345,75 330,70 330,80" fill="#F5881F"/>
+                <rect x="350" y="35" width="110" height="80" rx="8" fill="#A6192E" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="405" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="white">3. Reporte</text>
+                <text x="405" y="85" text-anchor="middle" font-size="10" fill="white">de calidad</text>
+                <line x1="465" y1="75" x2="505" y2="75" stroke="#F5881F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="505,75 490,70 490,80" fill="#F5881F"/>
+                <rect x="510" y="35" width="110" height="80" rx="8" fill="#76232F" stroke="#F5881F" stroke-width="2" class="glow-rect"/>
+                <text x="565" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="white">4. Revisión</text>
+                <text x="565" y="85" text-anchor="middle" font-size="10" fill="white">humana</text>
+                <line x1="625" y1="75" x2="665" y2="75" stroke="#F5881F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="665,75 650,70 650,80" fill="#F5881F"/>
+                <rect x="670" y="35" width="110" height="80" rx="8" fill="#E4002B" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="725" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="white">5. Decisión</text>
+                <text x="725" y="85" text-anchor="middle" font-size="10" fill="white">técnica</text>
+                <line x1="785" y1="75" x2="825" y2="75" stroke="#F5881F" stroke-width="2" class="animated-arrow"/>
+                <polygon points="825,75 810,70 810,80" fill="#F5881F"/>
+                <rect x="830" y="35" width="110" height="80" rx="8" fill="#E4002B" stroke="#76232F" stroke-width="2" class="glow-rect"/>
+                <text x="885" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="white">6. Merge</text>
+                <text x="885" y="85" text-anchor="middle" font-size="10" fill="white">validado</text>
+            </svg>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Ventajas</h3>
+                    <ul>
+                        <li>Análisis rápido y exhaustivo</li>
+                        <li>Primer filtro automatizado</li>
+                        <li>Criterios consistentes</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Sinergia</h3>
+                    <p>Copilot identifica problemas frecuentes. Las personas revisan impacto, contexto, arquitectura y decisiones de negocio.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Práctica 3: Revisión de consulta SQL</h2>
+            <div class="card">
+                <h3>Prompt de Revisión</h3>
+                <div class="code-block">Actúa como Arquitecto de Datos Senior.
+Revisa esta consulta SQL e identifica:
+1. Problemas de rendimiento.
+2. Riesgos de calidad o seguridad.
+3. Buenas prácticas incumplidas.
+4. Recomendaciones de mejora con severidad.</div>
+            </div>
+            <div class="grid">
+                <div class="card blue">
+                    <h3>Código a Revisar</h3>
+                    <div class="code-block">SELECT *
+FROM transacciones t
+WHERE YEAR(fecha_transaccion) = 2025</div>
+                </div>
+                <div class="card green-border">
+                    <h3>Mejoras Esperadas</h3>
+                    <ul>
+                        <li>Columnas explícitas</li>
+                        <li>Filtro por rango de fechas</li>
+                        <li>Riesgos y supuestos documentados</li>
+                        <li>Índices o particiones a validar</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Lista de verificación: revisión de código asistida</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Calidad Técnica</h3>
+                    <ul>
+                        <li>Legibilidad y nombres claros</li>
+                        <li>Complejidad innecesaria</li>
+                        <li>Manejo de errores y casos borde</li>
+                        <li>Pruebas o validaciones mínimas</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Datos y Seguridad</h3>
+                    <ul>
+                        <li>Datos sensibles expuestos</li>
+                        <li>Credenciales o secretos en código</li>
+                        <li>Supuestos no documentados</li>
+                        <li>Permisos y ambientes productivos</li>
+                    </ul>
+                </div>
+                <div class="card green-border">
+                    <h3>Rendimiento</h3>
+                    <ul>
+                        <li>Filtros eficientes</li>
+                        <li>Columnas explícitas</li>
+                        <li>Uniones controladas</li>
+                        <li>Particionamiento y volumen estimado</li>
+                    </ul>
+                </div>
+                <div class="card alert">
+                    <h3>Decisión Humana</h3>
+                    <ul>
+                        <li>Qué aprobar</li>
+                        <li>Qué corregir</li>
+                        <li>Qué escalar</li>
+                        <li>Qué evidencia falta</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="slide">
+            <h2>Diseño de Agentes Especializados</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">Un agente no es un prompt largo. Es una capacidad diseñada para una tarea repetible, con rol, contexto, entradas, salidas, límites y criterios de validación.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card highlight">
+                    <h3>Agente de SQL</h3>
+                    <p>Optimiza consultas, explica planes, detecta riesgos y propone alternativas.</p>
+                </div>
+                <div class="card blue">
+                    <h3>Revisor de Código</h3>
+                    <p>Evalúa calidad, seguridad, mantenibilidad y cobertura antes del pull request.</p>
+                </div>
+                <div class="card green-border">
+                    <h3>Generador de Documentación</h3>
+                    <p>Produce README, runbooks, diccionarios de datos y notas de operación.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Canvas del Acelerador</h2>
+            <div class="canvas-grid">
+                <div class="canvas-tile"><strong>Usuario Objetivo</strong>¿Quién lo usará y en qué momento del flujo de trabajo?</div>
+                <div class="canvas-tile"><strong>Problema Repetible</strong>¿Qué tarea consume tiempo, genera retrabajo o depende de expertos?</div>
+                <div class="canvas-tile"><strong>Entradas</strong>Código, consulta, notebook, tabla, error, documentación o contexto funcional.</div>
+                <div class="canvas-tile"><strong>Instrucciones</strong>Rol, reglas, estándares, restricciones y formato esperado.</div>
+                <div class="canvas-tile"><strong>Salida</strong>Recomendación, diferencia, lista de verificación, reporte, documentación o plan de acción.</div>
+                <div class="canvas-tile"><strong>Control Humano</strong>Qué debe revisar una persona antes de aceptar el resultado.</div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Práctica 4: Diseñar un Acelerador</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <span class="activity-label">Opciones</span>
+                    <h3>Elige un caso</h3>
+                    <ul>
+                        <li>Agente de SQL</li>
+                        <li>Revisor de Código</li>
+                        <li>Generador de Documentación</li>
+                        <li>Asistente de Onboarding</li>
+                        <li>Analista de Calidad de Datos</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <span class="activity-label">Entrega</span>
+                    <h3>Diseño mínimo viable</h3>
+                    <p>Completar el canvas, escribir el prompt principal, definir límites y simular una interacción con una entrada realista.</p>
+                </div>
+            </div>
+            <div class="footer-note">Un buen acelerador debe ser específico. “Ayudar con datos” es demasiado amplio; “revisar consultas SQL de reporting antes del merge” sí es operable.</div>
+        </div>
+
+        <div class="slide">            <h2>De Canvas a Implementación</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">El acelerador diseñado en el canvas se materializa como un archivo ejecutable en el repositorio del equipo.</p>
+            </div>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Ruta de implementación</h3>
+                    <ul>
+                        <li>Canvas completado en el taller</li>
+                        <li>Instrucciones base en <code>.github/copilot-instructions.md</code></li>
+                        <li>Prompt invocable en <code>.github/prompts/mi-agente.prompt.md</code></li>
+                        <li>Validación con caso real del equipo</li>
+                        <li>Pull request para revisión y aprobación</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Evolución progresiva</h3>
+                    <ul>
+                        <li>v0: prompt simple con instrucciones fijas</li>
+                        <li>v1: prompt con variables y contexto dinámico</li>
+                        <li>v2: agente con herramientas (MCP) si la complejidad lo requiere</li>
+                        <li>v3: flujo multi-agente con orquestación</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note">No todo necesita ser un agente complejo. La mayoría de aceleradores para equipos de datos empiezan como un buen <code>.prompt.md</code> con instrucciones claras.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Gobernabilidad de Sistemas Agénticos</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">Gobernabilidad es la capacidad de controlar, limitar y auditar lo que un agente puede hacer, sobre qué datos opera y quién autoriza sus acciones.</p>
+            </div>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Controles esenciales</h3>
+                    <ul>
+                        <li>Alcance definido: qué tareas puede y no puede hacer</li>
+                        <li>Datos permitidos vs. restringidos (PII, secretos, producción)</li>
+                        <li>Aprobación humana obligatoria antes de cambios críticos</li>
+                        <li>Versionamiento de instrucciones y prompts en Git</li>
+                        <li>Política de "no merge sin revisión documentada"</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Cómo implementarlo</h3>
+                    <ul>
+                        <li>Restricciones en <code>.github/copilot-instructions.md</code></li>
+                        <li>Límites explícitos en cada <code>.prompt.md</code></li>
+                        <li>Pull requests como evidencia de validación humana</li>
+                        <li>Roles claros: quién aprueba, quién opera, quién audita</li>
+                        <li>Registro de cambios asistidos por IA en commits</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note">En una organización regulada, la pregunta no es "¿funciona?" sino "¿puedo demostrar que fue controlado, autorizado y validado?"</div>
+        </div>
+
+        <div class="slide">
+            <h2>Observabilidad en Agentes de IA</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">Observabilidad es la capacidad de entender qué hizo el agente, por qué lo hizo, cuánto tardó y qué impacto tuvo, sin necesidad de reproducir la sesión.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card highlight">
+                    <h3>Trazas</h3>
+                    <ul>
+                        <li>Entrada del usuario</li>
+                        <li>Instrucciones aplicadas</li>
+                        <li>Herramientas invocadas</li>
+                        <li>Respuesta generada</li>
+                        <li>Decisión humana final</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Métricas</h3>
+                    <ul>
+                        <li>Tasa de aceptación de respuestas</li>
+                        <li>Prompts más y menos usados</li>
+                        <li>Tiempo ahorrado por tarea</li>
+                        <li>Errores detectados por revisión</li>
+                        <li>Cobertura del equipo</li>
+                    </ul>
+                </div>
+                <div class="card green-border">
+                    <h3>Señales de alerta</h3>
+                    <ul>
+                        <li>Agente usado fuera de contexto</li>
+                        <li>Respuestas aceptadas sin revisión</li>
+                        <li>Prompts sin dueño ni versión</li>
+                        <li>Cambios productivos sin aprobación</li>
+                        <li>Caída en tasa de uso del equipo</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note">La observabilidad convierte al agente en un sistema operado, no en una caja negra. Sin trazas no hay mejora continua.</div>
+        </div>
+
+        <div class="slide">
+            <h2>Evaluación de Sistemas Agénticos</h2>
+            <div class="message-box">
+                <p style="font-size: 1.12em; margin: 0; color: #76232F;">Evaluación es el proceso de medir si el agente cumple su propósito: produce respuestas correctas, seguras, útiles y dentro de los límites definidos.</p>
+            </div>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Qué evaluar</h3>
+                    <table>
+                        <thead><tr><th>Dimensión</th><th>Pregunta clave</th></tr></thead>
+                        <tbody>
+                            <tr><td>Correctitud</td><td>¿La respuesta es técnicamente correcta?</td></tr>
+                            <tr><td>Relevancia</td><td>¿Resuelve el problema planteado?</td></tr>
+                            <tr><td>Seguridad</td><td>¿Respeta límites de datos y acciones?</td></tr>
+                            <tr><td>Consistencia</td><td>¿Produce resultados similares ante entradas similares?</td></tr>
+                            <tr><td>Utilidad</td><td>¿Reduce tiempo o mejora calidad?</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card blue">
+                    <h3>Cómo evaluar</h3>
+                    <ul>
+                        <li>Casos de prueba con entrada y salida esperada</li>
+                        <li>Revisión entre pares de respuestas generadas</li>
+                        <li>Comparación antes/después en tareas reales</li>
+                        <li>Registro de hallazgos falsos positivos y negativos</li>
+                        <li>Iteración: ajustar instrucciones según resultados</li>
+                    </ul>
+                    <div class="footer-note" style="margin-top: 15px;">Un agente que no se evalúa regularmente se degrada. La evaluación es el motor de mejora continua.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Cierre: Pitch del Acelerador</h2>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Formato de Presentación</h3>
+                    <ul>
+                        <li>Problema que resuelve</li>
+                        <li>Usuario objetivo</li>
+                        <li>Cómo funciona</li>
+                        <li>Qué controles tiene</li>
+                        <li>Qué evidencia valida su valor</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h3>Evaluación entre Pares</h3>
+                    <ul>
+                        <li>¿Es reutilizable?</li>
+                        <li>¿Tiene límites claros?</li>
+                        <li>¿Reduce retrabajo real?</li>
+                        <li>¿Puede mantenerse?</li>
+                        <li>¿Tiene criterio de éxito medible?</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Entregable Final del Taller</h2>
+            <div class="message-box">
+                <p style="font-size: 1.15em; margin: 0; color: #76232F;">Al final, cada grupo debe tener un paquete reutilizable para llevar a su equipo y evolucionarlo en la práctica.</p>
+            </div>
+            <div class="grid">
+                <div class="card highlight">
+                    <h3>Copilot Team Kit</h3>
+                    <ul>
+                        <li>Custom Instructions del equipo</li>
+                        <li>3 prompts reutilizables</li>
+                        <li>Lista de verificación de revisión de código</li>
+                        <li>Canvas de agente especializado</li>
+                    </ul>
+                </div>
+                <div class="card green-border">
+                    <h3>Criterios de Aceptación</h3>
+                    <ul>
+                        <li>Es específico y reutilizable</li>
+                        <li>Tiene límites claros</li>
+                        <li>Define entradas y salidas</li>
+                        <li>Incluye validación humana</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note" style="margin-top: 40px; text-align: center; font-size: 1.1em;"><strong>¡Gracias por tu participación en el taller!</strong><br>El siguiente paso es convertir estos activos en hábitos reales del equipo.</div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-button" id="prevBtn" aria-label="Diapositiva anterior">❮</button>
+        <div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">25</span></div>
+        <button class="nav-button" id="nextBtn" aria-label="Siguiente diapositiva">❯</button>
+    </div>
+
+    <div class="keyboard-hint">← → o Space para navegar</div>
+
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlideIndex].classList.remove('active');
+            currentSlideIndex = (n + totalSlides) % totalSlides;
+            slides[currentSlideIndex].classList.add('active');
+            document.getElementById('currentSlide').textContent = currentSlideIndex + 1;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlideIndex + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlideIndex - 1);
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', nextSlide);
+        document.getElementById('prevBtn').addEventListener('click', prevSlide);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
